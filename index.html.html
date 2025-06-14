@@ -2,38 +2,214 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1100, initial-scale=1.0">
     <title>Sci-Fi Spacecraft HUD</title>
     <style>
-        /* ... your full CSS is unchanged ... */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        /* ... all other styles exactly as before ... */
-        /* (snip for brevity, your original CSS is fine) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            font-family: 'Orbitron', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .hud-container {
+            width: 1100px;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(10, 20, 30, 0.9) 0%, rgba(5, 10, 20, 0.85) 100%);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            position: relative;
+            padding: 20px;
+            box-shadow:
+                inset 0 0 50px rgba(0, 255, 255, 0.1),
+                0 0 30px rgba(0, 255, 255, 0.2),
+                0 0 60px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .hud-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(0, 255, 255, 0.03) 0px, transparent 1px, transparent 2px, rgba(0, 255, 255, 0.03) 3px),
+                repeating-linear-gradient(90deg, rgba(0, 255, 255, 0.03) 0px, transparent 1px, transparent 2px, rgba(0, 255, 255, 0.03) 3px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            border-radius: 8px;
+        }
+        .controls-section {
+            display: flex; gap: 20px; height: 100%;
+            align-items: center; position: relative; z-index: 1; justify-content: space-between;
+        }
+        .toggle-group, .weapon-group, .system-group {
+            display: flex; gap: 12px; padding: 0 15px;
+            border-right: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .system-group { border-right: none; }
+        .hud-button {
+            width: 80px; height: 120px;
+            background: linear-gradient(145deg, rgba(20, 30, 40, 0.8) 0%, rgba(10, 15, 25, 0.9) 100%);
+            border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .hud-button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4); }
+        .hud-button:active { transform: translateY(0); }
+        .icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+            color: rgba(0, 255, 255, 0.7); text-align: center; font-weight: 700;
+        }
+        .hud-button.active {
+            background: linear-gradient(145deg, rgba(0, 100, 150, 0.3) 0%, rgba(0, 50, 100, 0.4) 100%);
+            border-color: rgba(0, 255, 255, 0.8);
+        }
+        .hud-button.active .icon { filter: drop-shadow(0 0 10px currentColor); }
+        .engines-btn.active .icon { color: #ff6b35; } .engines-btn.active { border-color: #ff6b35; }
+        .weapons-btn.active .icon { color: #ff3333; } .weapons-btn.active { border-color: #ff3333; }
+        .landing-btn.active .icon { color: #33ff33; } .landing-btn.active { border-color: #33ff33; }
+        .ramp-btn.active .icon { color: #33ff33; } .ramp-btn.active { border-color: #33ff33; }
+        .hover-btn.active .icon { color: #3399ff; } .hover-btn.active { border-color: #3399ff; }
+        .primary-weapon.selected .icon { color: #00ccff; }
+        .primary-weapon.selected {
+            background: linear-gradient(145deg, rgba(0, 150, 200, 0.3) 0%, rgba(0, 100, 150, 0.4) 100%);
+            border-color: #00ccff;
+        }
+        .secondary-weapon.selected .icon { color: #00ff88; }
+        .secondary-weapon.selected {
+            background: linear-gradient(145deg, rgba(0, 200, 100, 0.3) 0%, rgba(0, 150, 50, 0.4) 100%);
+            border-color: #00ff88;
+        }
+        .camera-btn.active .icon { color: #ffcc00; } .camera-btn.active { border-color: #ffcc00; }
+        .icon svg { width: 50px; height: 50px; fill: none; stroke: currentColor; stroke-width: 2; transition: all 0.3s ease; }
+        @keyframes weaponPulse {
+            0%, 100% { r: 3; opacity: 1; }
+            50% { r: 5; opacity: 0.3; }
+        }
+        .weapons-btn.active .weapon-pulse { animation: weaponPulse 1.5s ease-in-out infinite; }
+        .click-effect {
+            position: absolute; top: 50%; left: 50%; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            transform: translate(-50%, -50%) scale(0); pointer-events: none;
+        }
+        .hud-button.clicked .click-effect { animation: clickRipple 0.6s ease-out; }
+        @keyframes clickRipple {
+            to { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        .options-btn { background: linear-gradient(145deg, rgba(50, 50, 70, 0.8) 0%, rgba(30, 30, 50, 0.9) 100%); }
+        .options-btn:hover { border-color: #ffffff; box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3); }
+        .ramp-btn .ramp-closed { opacity: 1; transition: opacity 0.3s ease; }
+        .ramp-btn .ramp-open { opacity: 0; transition: opacity 0.3s ease; }
+        .ramp-btn.active .ramp-closed { opacity: 0; }
+        .ramp-btn.active .ramp-open { opacity: 1; }
+        .ramp-btn.active .lock-indicator { fill: #33ff33; }
+        .ramp-btn.active .cargo-light { animation: cargoLight 1s ease-in-out infinite; }
+        @keyframes cargoLight { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+        .ramp-btn.active .ramp-arrow { animation: rampMotion 1.5s ease-in-out infinite; }
+        @keyframes rampMotion { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+        @keyframes thrust {
+            0%, 100% { transform: scaleY(1); opacity: 0.8; }
+            50% { transform: scaleY(1.5); opacity: 1; }
+        }
+        .engines-btn.active .engine-thrust { animation: thrust 0.5s ease-in-out infinite; }
+        .engines-btn.active .engine-core { opacity: 1; filter: drop-shadow(0 0 10px currentColor); }
     </style>
 </head>
 <body>
     <div class="hud-container">
         <div class="controls-section">
-            <!-- ... all your buttons unchanged ... -->
-            <!-- (snip for brevity, your original HTML buttons are fine) -->
+            <!-- Your actual button HTML/SVGs here (same as you provided) -->
+            <!-- For brevity, not re-pasting the SVG, just place as before -->
+            <div class="toggle-group">
+                <div class="hud-button engines-btn">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Engines</span><div class="click-effect"></div>
+                </div>
+                <div class="hud-button weapons-btn">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Weapons</span><div class="click-effect"></div>
+                </div>
+                <div class="hud-button landing-btn">
+                    <div class="icon"><svg viewBox="0 0 40 40">...</svg></div>
+                    <span class="label">Landing Gear</span><div class="click-effect"></div>
+                </div>
+                <div class="hud-button ramp-btn">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Ramp</span><div class="click-effect"></div>
+                </div>
+                <div class="hud-button hover-btn">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Hover</span><div class="click-effect"></div>
+                </div>
+            </div>
+            <div class="weapon-group">
+                <div class="hud-button primary-weapon">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Primary Weapon</span><div class="click-effect"></div>
+                </div>
+                <div class="hud-button secondary-weapon">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Secondary Weapon</span><div class="click-effect"></div>
+                </div>
+            </div>
+            <div class="system-group">
+                <div class="hud-button camera-btn">
+                    <div class="icon"><svg viewBox="0 0 40 40">...</svg></div>
+                    <span class="label">Camera</span><div class="click-effect"></div>
+                </div>
+                <div class="hud-button options-btn">
+                    <div class="icon"><svg viewBox="0 0 100 100">...</svg></div>
+                    <span class="label">Options</span><div class="click-effect"></div>
+                </div>
+            </div>
         </div>
     </div>
-
     <script>
-        // --- HTTP-in URL for the HUD, supplied as ?url=... by LSL ---
+        // Full robust JS, no shortcuts
+
         let HUD_HTTP_URL = '';
-        document.addEventListener('DOMContentLoaded', () => {
-            // Get the HTTP-in URL from the query parameter
+
+        function initHUD() {
             const params = new URLSearchParams(window.location.search);
             HUD_HTTP_URL = params.get('url');
-            // Select primary weapon by default
-            document.querySelector('.primary-weapon').classList.add('selected');
-        });
 
-        // Send a command to the LSL HUD via HTTP POST
+            const enginesBtn = document.querySelector('.engines-btn');
+            const weaponsBtn = document.querySelector('.weapons-btn');
+            const landingBtn = document.querySelector('.landing-btn');
+            const rampBtn = document.querySelector('.ramp-btn');
+            const hoverBtn = document.querySelector('.hover-btn');
+            const primaryWeaponBtn = document.querySelector('.primary-weapon');
+            const secondaryWeaponBtn = document.querySelector('.secondary-weapon');
+            const cameraBtn = document.querySelector('.camera-btn');
+            const optionsBtn = document.querySelector('.options-btn');
+
+            if (!primaryWeaponBtn || !secondaryWeaponBtn) {
+                setTimeout(initHUD, 50);
+                return;
+            }
+
+            primaryWeaponBtn.classList.add('selected');
+
+            enginesBtn.onclick = function() { toggleButton(this); };
+            weaponsBtn.onclick = function() { toggleButton(this); };
+            landingBtn.onclick = function() { toggleButton(this); };
+            rampBtn.onclick = function() { toggleButton(this); };
+            hoverBtn.onclick = function() { toggleButton(this); };
+            cameraBtn.onclick = function() { toggleButton(this); };
+            primaryWeaponBtn.onclick = function() { selectWeapon(this, 'primary'); };
+            secondaryWeaponBtn.onclick = function() { selectWeapon(this, 'secondary'); };
+            optionsBtn.onclick = function(event) { addClickEffect(event.currentTarget || this); sendToSL('OPTIONS', 'OPEN'); };
+        }
+
+        document.addEventListener('DOMContentLoaded', initHUD);
+
         function sendToSL(command, value) {
             if (!HUD_HTTP_URL) {
-                alert("HUD is not initialized, URL missing.");
+                alert("HUD is not initialized (missing URL).");
                 return;
             }
             fetch(HUD_HTTP_URL, {
@@ -43,56 +219,80 @@
             }).catch(console.error);
         }
 
-        // Toggle button functionality
         function toggleButton(button) {
             button.classList.toggle('active');
             addClickEffect(button);
-
-            // Get button state and send to SL
             const label = button.querySelector('.label').textContent;
             const state = button.classList.contains('active') ? '1' : '0';
             sendToSL(label.toUpperCase().replace(' ', '_'), state);
         }
 
-        // Weapon selection (mutually exclusive)
         function selectWeapon(button, type) {
-            document.querySelectorAll('.primary-weapon, .secondary-weapon').forEach(btn => {
-                btn.classList.remove('selected');
-            });
+            document.querySelectorAll('.primary-weapon, .secondary-weapon').forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
             addClickEffect(button);
             sendToSL('WEAPON', type.toUpperCase());
         }
 
-        // Options menu
-        function openOptions() {
-            addClickEffect(event.currentTarget || this);
-            sendToSL('OPTIONS', 'OPEN');
-        }
-
-        // Click ripple effect
         function addClickEffect(button) {
             button.classList.add('clicked');
-            setTimeout(() => {
-                button.classList.remove('clicked');
-            }, 600);
+            setTimeout(() => { button.classList.remove('clicked'); }, 600);
         }
 
-        // Optional: Accept messages from LSL for HUD updates (future extension)
+        // No shortcuts, handle all HUD states
         window.addEventListener('message', function(e) {
             if (e.data && e.data.type === 'SL_UPDATE') {
                 updateHUDState(e.data.state);
             }
         });
 
-        // Optional: Update HUD button states from LSL (for two-way sync)
         function updateHUDState(state) {
-            if (state.engines !== undefined) {
-                const enginesBtn = document.querySelector('.engines-btn');
+            // Engines
+            const enginesBtn = document.querySelector('.engines-btn');
+            if (enginesBtn && state.engines !== undefined) {
                 if (state.engines) enginesBtn.classList.add('active');
                 else enginesBtn.classList.remove('active');
             }
-            // Add similar logic for other systems if you implement feedback
+            // Weapons
+            const weaponsBtn = document.querySelector('.weapons-btn');
+            if (weaponsBtn && state.weapons !== undefined) {
+                if (state.weapons) weaponsBtn.classList.add('active');
+                else weaponsBtn.classList.remove('active');
+            }
+            // Landing Gear
+            const landingBtn = document.querySelector('.landing-btn');
+            if (landingBtn && state.landing_gear !== undefined) {
+                if (state.landing_gear) landingBtn.classList.add('active');
+                else landingBtn.classList.remove('active');
+            }
+            // Ramp
+            const rampBtn = document.querySelector('.ramp-btn');
+            if (rampBtn && state.ramp !== undefined) {
+                if (state.ramp) rampBtn.classList.add('active');
+                else rampBtn.classList.remove('active');
+            }
+            // Hover
+            const hoverBtn = document.querySelector('.hover-btn');
+            if (hoverBtn && state.hover !== undefined) {
+                if (state.hover) hoverBtn.classList.add('active');
+                else hoverBtn.classList.remove('active');
+            }
+            // Camera
+            const cameraBtn = document.querySelector('.camera-btn');
+            if (cameraBtn && state.camera !== undefined) {
+                if (state.camera) cameraBtn.classList.add('active');
+                else cameraBtn.classList.remove('active');
+            }
+            // Weapon selection
+            const primaryWeaponBtn = document.querySelector('.primary-weapon');
+            const secondaryWeaponBtn = document.querySelector('.secondary-weapon');
+            if (primaryWeaponBtn && state.weapon === 'PRIMARY') {
+                primaryWeaponBtn.classList.add('selected');
+                if (secondaryWeaponBtn) secondaryWeaponBtn.classList.remove('selected');
+            } else if (secondaryWeaponBtn && state.weapon === 'SECONDARY') {
+                secondaryWeaponBtn.classList.add('selected');
+                if (primaryWeaponBtn) primaryWeaponBtn.classList.remove('selected');
+            }
         }
     </script>
 </body>
