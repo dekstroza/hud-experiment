@@ -625,7 +625,13 @@
     <script>
         // SecondLife Integration
         const SL_OBJECT_KEY = 'YOUR_OBJECT_KEY'; // Will be set by LSL
-        const VEHICLE_CHANNEL = 4321;
+        // const VEHICLE_CHANNEL = 4321;
+        const VEHICLE_CHANNEL =  window.BROWSER_HUD_CHAT_CHANNEL || window.moap?.BROWSER_HUD_CHAT_CHANNEL;
+
+        if (!VEHICLE_CHANNEL) {
+          console.error("⚠️ VEHICLE_CHANNEL not found!");
+        }
+
         
         // Function to send commands to SecondLife
         function sendToSL(command, value) {
