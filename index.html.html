@@ -625,6 +625,7 @@
     <script>
         // SecondLife Integration
         const SL_OBJECT_KEY = 'YOUR_OBJECT_KEY'; // Will be set by LSL
+        const params = new URLSearchParams(window.location.search);
         // const VEHICLE_CHANNEL = 4321;
         const VEHICLE_CHANNEL = parseInt(params.get('chan'), 10);
         console.log('HUD key:', SL_OBJECT_KEY);
