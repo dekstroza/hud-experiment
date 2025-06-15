@@ -3,9 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <title>MOAP Dropship HUD</title>
+  <!-- lock viewport to 1024×1024 and disable user scaling -->
+  <meta name="viewport"
+        content="width=1024,
+                 height=1024,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 minimum-scale=1.0,
+                 user-scalable=no">
   <style>
     html, body {
+      width: 1024px;
+      height: 1024px;
       margin: 0;
+      overflow: hidden;
       background: black;
     }
 
@@ -81,13 +92,10 @@
     <!-- Top system zones (toggles) -->
     <div class="zone toggle" style="top:550px; left:108px; width:120px; height:50px;"
          onclick="handleClick(this,'ENGINES')"></div>
-
     <div class="zone toggle" style="top:655px; left:258px; width:172px; height:60px;"
          onclick="handleClick(this,'REAR CARGO RAMP')"></div>
-
     <div class="zone toggle" style="top:630px; left:675px; width:155px; height:30px;"
          onclick="handleClick(this,'LASER GUN')"></div>
-
     <div class="zone toggle" style="top:710px; left:570px; width:125px; height:60px;"
          onclick="handleClick(this,'LANDING GEAR')"></div>
 
@@ -179,8 +187,7 @@
       }
 
       console.log("Clicked:", label);
-      // removed alerts per request
-      // TODO: integrate additional LSL bridge code if needed
+      // alerts removed
     }
 
     /**
