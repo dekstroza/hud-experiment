@@ -13,9 +13,8 @@
                  user-scalable=no">
   <style>
     html, body {
-      width: 1024px;
-      height: 1024px;
       margin: 0;
+      padding: 0;
       overflow: hidden;
       background: black;
     }
@@ -24,7 +23,7 @@
       position: relative;
       width: 1024px;
       height: 1024px;
-      margin: auto;
+      transform-origin: top left;
       background-image: url("background-mockup-cleaned.png");
       background-size: cover;
     }
@@ -87,49 +86,72 @@
 <body>
   <div id="hud-container">
     <!-- preload click sound -->
-    <audio id="click-sound" src="https://actions.google.com/sounds/v1/ui/click.ogg" preload="auto"></audio>
+    <audio id="click-sound"
+           src="https://actions.google.com/sounds/v1/ui/click.ogg"
+           preload="auto"></audio>
 
     <!-- Top system zones (toggles) -->
-    <div class="zone toggle" style="top:550px; left:108px; width:120px; height:50px;"
+    <div class="zone toggle"
+         style="top:550px; left:108px; width:120px; height:50px;"
          onclick="handleClick(this,'ENGINES')"></div>
-    <div class="zone toggle" style="top:655px; left:258px; width:172px; height:60px;"
+
+    <div class="zone toggle"
+         style="top:655px; left:258px; width:172px; height:60px;"
          onclick="handleClick(this,'REAR CARGO RAMP')"></div>
-    <div class="zone toggle" style="top:630px; left:675px; width:155px; height:30px;"
+
+    <div class="zone toggle"
+         style="top:630px; left:675px; width:155px; height:30px;"
          onclick="handleClick(this,'LASER GUN')"></div>
-    <div class="zone toggle" style="top:710px; left:570px; width:125px; height:60px;"
+
+    <div class="zone toggle"
+         style="top:710px; left:570px; width:125px; height:60px;"
          onclick="handleClick(this,'LANDING GEAR')"></div>
 
     <!-- Engines thrust bar (0–100%) -->
-    <div id="engines-bar" style="top:615px; left:100px; width:120px; height:10px;">
-      <div class="bar-segment"></div><div class="bar-segment"></div>
-      <div class="bar-segment"></div><div class="bar-segment"></div>
-      <div class="bar-segment"></div><div class="bar-segment"></div>
-      <div class="bar-segment"></div><div class="bar-segment"></div>
-      <div class="bar-segment"></div><div class="bar-segment"></div>
+    <div id="engines-bar"
+         style="top:615px; left:100px; width:120px; height:10px;">
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
+      <div class="bar-segment"></div>
     </div>
 
     <!-- Bottom HUD buttons (non-toggles) -->
-    <div class="zone" style="bottom:20px; left:220px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:220px; width:45px; height:45px;"
          onclick="handleClick(this,'Power')"></div>
-    <div class="zone" style="bottom:20px; left:275px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:275px; width:45px; height:45px;"
          onclick="handleClick(this,'Grid')"></div>
-    <div class="zone" style="bottom:20px; left:330px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:330px; width:45px; height:45px;"
          onclick="handleClick(this,'Down Arrow')"></div>
-    <div class="zone" style="bottom:20px; left:385px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:385px; width:45px; height:45px;"
          onclick="handleClick(this,'Diamond')"></div>
-    <div class="zone" style="bottom:20px; left:440px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:440px; width:45px; height:45px;"
          onclick="handleClick(this,'Hex')"></div>
-    <div class="zone" style="bottom:20px; left:495px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:495px; width:45px; height:45px;"
          onclick="handleClick(this,'Warning')"></div>
-    <div class="zone" style="bottom:20px; left:550px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:550px; width:45px; height:45px;"
          onclick="handleClick(this,'Plus')"></div>
-    <div class="zone" style="bottom:20px; left:605px; width:45px; height:45px;"
+    <div class="zone"
+         style="bottom:20px; left:605px; width:45px; height:45px;"
          onclick="handleClick(this,'Bars')"></div>
   </div>
 
   <script>
     // SecondLife Integration
-    const SL_OBJECT_KEY = 'YOUR_OBJECT_KEY'; // Set by LSL if needed
+    const SL_OBJECT_KEY = 'YOUR_OBJECT_KEY'; // Will be set by LSL if needed
     const params = new URLSearchParams(window.location.search);
     const VEHICLE_CHANNEL = parseInt(params.get('chan'), 10);
     console.log('HUD key:', SL_OBJECT_KEY);
@@ -168,12 +190,10 @@
       if (label === 'ENGINES') {
         if (isActive) {
           sendToSL('ENGINE_START', '');
-          // fade in + animate to 40%
           document.getElementById('engines-bar').style.opacity = '1';
           setTimeout(() => animateThrust(40), 500);
         } else {
           sendToSL('ENGINE_STOP', '');
-          // animate to 0 then fade out
           animateThrust(0, () => {
             document.getElementById('engines-bar').style.opacity = '0';
           });
@@ -187,7 +207,6 @@
       }
 
       console.log("Clicked:", label);
-      // alerts removed
     }
 
     /**
@@ -261,6 +280,16 @@
       bar.style.opacity = '0';
       updateSegments(0);
     });
+
+    // scale-to-fit hack for SL’s media pane
+    function fitHUD() {
+      const container = document.getElementById('hud-container');
+      const w = window.innerWidth, h = window.innerHeight;
+      const scale = Math.min(w / 1024, h / 1024);
+      container.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('load', fitHUD);
+    window.addEventListener('resize', fitHUD);
   </script>
 </body>
 </html>
