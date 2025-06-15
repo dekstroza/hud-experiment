@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MOAP Dropship HUD</title>
+  <style>
+    html, body {
+      margin: 0;
+      background: black;
+    }
+
+    #hud-container {
+      position: relative;
+      width: 1024px;
+      height: 1024px;
+      margin: auto;
+      background-image: url("background-mockup-cleaned.png");
+      background-size: cover;
+    }
+
+    .zone {
+      position: absolute;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+    }
+
+    /* all buttons glow cyan on hover */
+    .zone:hover {
+      border-color: cyan;
+      background-color: rgba(0,255,255,0.1);
+      box-shadow: 0 0 8px cyan;
+    }
+
+    /* shimmer animation for active toggles */
+    @keyframes shimmer {
+      0%   { box-shadow: 0 0 6px lime, inset 0 0 4px lime; }
+      50%  { box-shadow: 0 0 14px lime, inset 0 0 6px lime; }
+      100% { box-shadow: 0 0 6px lime, inset 0 0 4px lime; }
+    }
+
+    /* when a toggle is “on” */
+    .zone.active {
+      border-color: lime;
+      background-color: rgba(0,255,0,0.2);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+
+    /* ---------- Progress Bar Styles ---------- */
+
+    #engines-bar {
+      position: absolute;
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .bar-segment {
+      flex: none;
+      width: 10px;
+      height: 10px;
+      border: 1px solid cyan;      /* same as buttons when off */
+      border-radius: 2px;
+      background-color: transparent;
+      transition: background-color 0.3s, box-shadow 0.3s, border-color 0.3s;
+    }
+
+    .bar-segment.active {
+      border-color: lime;
+      background-color: rgba(0,255,0,0.2);
+      box-shadow: 0 0 6px lime;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud-container">
+    <!-- preload click sound -->
+    <audio id="click-sound" src="https://actions.google.com/sounds/v1/ui/click.ogg" preload="auto"></audio>
+
+    <!-- Top system zones (toggles) -->
+    <div class="zone toggle" style="top:550px; left:108px; width:120px; height:50px;"
+         onclick="handleClick(this,'ENGINES')"></div>
+
+    <div class="zone toggle" style="top:655px; left:258px; width:172px; height:60px;"
+         onclick="handleClick(this,'REAR CARGO RAMP')"></div>
+
+    <div class="zone toggle" style="top:630px; left:675px; width:155px; height:30px;"
+         onclick="handleClick(this,'LASER GUN')"></div>
+
+    <div class="zone toggle" style="top:710px; left:570px; width:125px; height:60px;"
+         onclick="handleClick(this,'LANDING GEAR')"></div>
+
+    <!-- Engines thrust bar (0–100%) -->
+    <div id="engines-bar" style="top:615px; left:100px; width:120px; height:10px;">
+      <div class="bar-segment"></div><div class="bar-segment"></div>
+      <div class="bar-segment"></div><div class="bar-segment"></div>
+      <div class="bar-segment"></div><div class="bar-segment"></div>
+      <div class="bar-segment"></div><div class="bar-segment"></div>
+      <div class="bar-segment"></div><div class="bar-segment"></div>
+    </div>
+
+    <!-- Bottom HUD buttons (non-toggles) -->
+    <div class="zone" style="bottom:20px; left:220px; width:45px; height:45px;"
+         onclick="handleClick(this,'Power')"></div>
+    <div class="zone" style="bottom:20px; left:275px; width:45px; height:45px;"
+         onclick="handleClick(this,'Grid')"></div>
+    <div class="zone" style="bottom:20px; left:330px; width:45px; height:45px;"
+         onclick="handleClick(this,'Down Arrow')"></div>
+    <div class="zone" style="bottom:20px; left:385px; width:45px; height:45px;"
+         onclick="handleClick(this,'Diamond')"></div>
+    <div class="zone" style="bottom:20px; left:440px; width:45px; height:45px;"
+         onclick="handleClick(this,'Hex')"></div>
+    <div class="zone" style="bottom:20px; left:495px; width:45px; height:45px;"
+         onclick="handleClick(this,'Warning')"></div>
+    <div class="zone" style="bottom:20px; left:550px; width:45px; height:45px;"
+         onclick="handleClick(this,'Plus')"></div>
+    <div class="zone" style="bottom:20px; left:605px; width:45px; height:45px;"
+         onclick="handleClick(this,'Bars')"></div>
+  </div>
+
+  <script>
+    // SecondLife Integration
+    const SL_OBJECT_KEY = 'YOUR_OBJECT_KEY'; // Set by LSL if needed
+    const params = new URLSearchParams(window.location.search);
+    const VEHICLE_CHANNEL = parseInt(params.get('chan'), 10);
+    console.log('HUD key:', SL_OBJECT_KEY);
+    console.log('HUD channel:', VEHICLE_CHANNEL);
+
+    function sendToSL(command, value) {
+      const url = `secondlife:///app/chat/${VEHICLE_CHANNEL}/${command}:${value}`;
+      window.location = url;
+    }
+
+    const toggles = new Set([
+      'ENGINES',
+      'LASER GUN',
+      'LANDING GEAR',
+      'REAR CARGO RAMP'
+    ]);
+
+    // track current thrust %
+    let currentThrust = 0;
+
+    function handleClick(el, label) {
+      // play click sound
+      const clickSound = document.getElementById('click-sound');
+      if (clickSound) {
+        clickSound.currentTime = 0;
+        clickSound.play();
+      }
+
+      // toggle active state if it's one of the toggles
+      let isActive = false;
+      if (toggles.has(label)) {
+        isActive = el.classList.toggle('active');
+      }
+
+      // SL commands for toggles
+      if (label === 'ENGINES') {
+        if (isActive) {
+          sendToSL('ENGINE_START', '');
+          // fade in + animate to 40%
+          document.getElementById('engines-bar').style.opacity = '1';
+          setTimeout(() => animateThrust(40), 500);
+        } else {
+          sendToSL('ENGINE_STOP', '');
+          // animate to 0 then fade out
+          animateThrust(0, () => {
+            document.getElementById('engines-bar').style.opacity = '0';
+          });
+        }
+      } else if (label === 'REAR CARGO RAMP') {
+        sendToSL(isActive ? 'RAMP_OPEN' : 'RAMP_CLOSE', '');
+      } else if (label === 'LASER GUN') {
+        sendToSL(isActive ? 'LASER_ON' : 'LASER_OFF', '');
+      } else if (label === 'LANDING GEAR') {
+        sendToSL(isActive ? 'LANDING_GEAR_DOWN' : 'LANDING_GEAR_UP', '');
+      }
+
+      console.log("Clicked:", label);
+      // removed alerts per request
+      // TODO: integrate additional LSL bridge code if needed
+    }
+
+    /**
+     * Animate thrust bar to targetPercent.
+     * Calls callback (if provided) when done.
+     */
+    function animateThrust(targetPercent, callback) {
+      const segments = document.querySelectorAll('#engines-bar .bar-segment');
+      const total = segments.length;
+      const startCount = Math.round(currentThrust / 100 * total);
+      const endCount = Math.round(targetPercent / 100 * total);
+      const step = endCount > startCount ? 1 : -1;
+      let index = startCount;
+
+      const interval = setInterval(() => {
+        if (index === endCount) {
+          clearInterval(interval);
+          currentThrust = targetPercent;
+          if (callback) callback();
+          return;
+        }
+        index += step;
+        segments.forEach((seg, i) => {
+          seg.classList.toggle('active', i < index);
+        });
+      }, 100);
+    }
+
+    /**
+     * Public API for updating the thrust bar.
+     * @param {number} percent – 0 to 100
+     * @param {boolean} animate – default true
+     */
+    function setThrust(percent, animate = true) {
+      const bar = document.getElementById('engines-bar');
+      const p = Math.max(0, Math.min(100, percent));
+
+      if (bar.style.opacity === '0') {
+        bar.style.opacity = '1';
+        if (animate) {
+          setTimeout(() => animateThrust(p), 500);
+        } else {
+          updateSegments(p);
+        }
+      } else {
+        if (animate) {
+          animateThrust(p);
+        } else {
+          updateSegments(p);
+        }
+      }
+    }
+
+    /**
+     * Jump straight to a thrust value without animation.
+     * @param {number} percent – 0 to 100
+     */
+    function updateSegments(percent) {
+      const segments = document.querySelectorAll('#engines-bar .bar-segment');
+      const total = segments.length;
+      const activeCount = Math.round((percent / 100) * total);
+      segments.forEach((seg, i) => {
+        seg.classList.toggle('active', i < activeCount);
+      });
+      currentThrust = percent;
+    }
+
+    // on load: hide & clear
+    document.addEventListener('DOMContentLoaded', () => {
+      const bar = document.getElementById('engines-bar');
+      bar.style.opacity = '0';
+      updateSegments(0);
+    });
+  </script>
+</body>
+</html>
