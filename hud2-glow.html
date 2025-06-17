@@ -91,7 +91,7 @@
       if (label === "ENGINES") {
         const bar = document.getElementById("engines-bar");
         bar.style.opacity = !isActive ? "1" : "0";
-        if (!isActive) setTimeout(() => animateThrust(40), 300);
+        if (!isActive) setTimeout(() => animateThrust(currentThrust), 300);
         else animateThrust(0);
       }
     }
@@ -144,7 +144,7 @@
             lastToggle = data.toggle;
           }
 
-          if (data.thrust !== undefined) setThrust(data.thrust);
+          if (typeof data.thrust === "number") setThrust(data.thrust);
         } catch (e) {
           console.warn("AJAX error", e);
         }
