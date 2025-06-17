@@ -131,7 +131,7 @@
     async function pollProxyLoop() {
       while (true) {
         try {
-          const res = await fetch("/.netlify/functions/from-lsl?ts=" + Date.now());
+          const res = await fetch("/.netlify/functions/from-sl?ts=" + Date.now());
           const data = await res.json();
           if (data.toggle) toggleUI(data.toggle);
           if (data.thrust !== undefined) setThrust(data.thrust);
