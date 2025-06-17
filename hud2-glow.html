@@ -64,7 +64,7 @@
     <div class="zone toggle" id="zone-engines" style="top:550px; left:108px; width:120px; height:50px;"></div>
     <div class="zone toggle" id="zone-ramp" style="top:655px; left:258px; width:172px; height:60px;"></div>
     <div class="zone toggle" id="zone-laser" style="top:630px; left:675px; width:155px; height:30px;"></div>
-    <div class="zone toggle" id="zone-gear" style="top:710px; left:570px; width:125px; height:60px;"></div>
+    <div class="zone toggle active" id="zone-gear" style="top:710px; left:570px; width:125px; height:60px;"></div>
     <div id="engines-bar" style="top:615px; left:100px; width:120px; height:10px;">
       <div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div><div class="bar-segment"></div>
     </div>
@@ -104,6 +104,15 @@
       currentThrust = p;
     }
 
+    function applyLandingGearUpdate(state) {
+      const el = zones["LANDING GEAR"];
+      if (!el) return;
+
+      const active = (state === "DOWN");
+      if (active) el.classList.add("active");
+      else el.classList.remove("active");
+    }
+
     function animateThrust(targetPercent, callback) {
       const segments = document.querySelectorAll('#engines-bar .bar-segment');
       const total = segments.length;
@@ -137,6 +146,9 @@
             }
             if ("THRUST" in data.update) {
               applyThrustUpdate(data.update.THRUST);
+            }
+            if ("LANDING_GEAR" in data.update) {
+              applyLandingGearUpdate(data.update.LANDING_GEAR);
             }
           }
         } catch (e) {
