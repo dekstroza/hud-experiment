@@ -72,8 +72,6 @@
 
   <script>
     let currentThrust = 0;
-    let lastToggle = null;
-    let engineActive = false;
 
     const zones = {
       "ENGINES": document.getElementById("zone-engines"),
@@ -82,19 +80,15 @@
       "LANDING GEAR": document.getElementById("zone-gear")
     };
 
-    function toggleUI(label) {
+    function forceToggleState(label, isActive) {
       const el = zones[label];
       if (!el) return;
+      el.classList.toggle("active", isActive);
 
       if (label === "ENGINES") {
-        engineActive = !engineActive;
-        el.classList.toggle("active", engineActive);
         const bar = document.getElementById("engines-bar");
-        bar.style.opacity = engineActive ? "1" : "0";
-        if (!engineActive) animateThrust(0);
-      } else {
-        const newState = !el.classList.contains("active");
-        el.classList.toggle("active", newState);
+        bar.style.opacity = isActive ? "1" : "0";
+        if (!isActive) animateThrust(0);
       }
     }
 
@@ -121,7 +115,7 @@
 
     function setThrust(percent, animate = true) {
       const p = Math.max(0, Math.min(100, percent));
-      if (!engineActive) return;
+      if (zones["ENGINES"] && !zones["ENGINES"].classList.contains("active")) return;
       if (animate) animateThrust(p);
       else updateSegments(p);
     }
@@ -142,9 +136,10 @@
           const res = await fetch("/.netlify/functions/from-sl?ts=" + Date.now());
           const data = await res.json();
 
-          if (data.toggle && data.toggle !== lastToggle) {
-            toggleUI(data.toggle);
-            lastToggle = data.toggle;
+          if (data.toggles) {
+            for (const [label, isActive] of Object.entries(data.toggles)) {
+              forceToggleState(label, isActive);
+            }
           }
 
           if (typeof data.thrust === "number") setThrust(data.thrust);
