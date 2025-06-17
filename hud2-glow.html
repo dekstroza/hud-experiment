@@ -122,6 +122,15 @@
       else el.classList.remove("active");
     }
 
+    function applyLaserUpdate(state) {
+      const el = zones["LASER GUN"];
+      if (!el) return;
+
+      const active = (state === "ON");
+      if (active) el.classList.add("active");
+      else el.classList.remove("active");
+    }
+
     function animateThrust(targetPercent, callback) {
       const segments = document.querySelectorAll('#engines-bar .bar-segment');
       const total = segments.length;
@@ -161,6 +170,9 @@
             }
             if ("RAMP" in data.update) {
               applyRampUpdate(data.update.RAMP);
+            }
+            if ("LASER" in data.update) {
+              applyLaserUpdate(data.update.LASER);
             }
           }
         } catch (e) {
