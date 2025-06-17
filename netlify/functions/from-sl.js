@@ -1,39 +1,28 @@
-let state = {
-  toggles: {
-    "ENGINES": false,
-    "REAR CARGO RAMP": false,
-    "LASER GUN": false,
-    "LANDING GEAR": true  // Initial state: gear down
-  },
-  thrust: 0
-};
+let lastReceived = {}; // Stores last unmodified POST body
 
 export async function handler(event) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: corsHeaders };
+  }
+
   if (event.httpMethod === "POST") {
     try {
-      const body = JSON.parse(event.body || "{}");
-
-      // ✅ Handle toggles sent as an object
-      if (body.toggles && typeof body.toggles === 'object') {
-        for (const [key, val] of Object.entries(body.toggles)) {
-          if (key in state.toggles) {
-            state.toggles[key] = !!val;
-          }
-        }
-      }
-
-      // ✅ Handle thrust percent
-      if (typeof body.thrust === "number") {
-        state.thrust = Math.max(0, Math.min(100, body.thrust));
-      }
-
+      lastReceived = JSON.parse(event.body || "{}");
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify({ success: true })
       };
     } catch (e) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: "Invalid JSON" })
       };
     }
@@ -42,16 +31,14 @@ export async function handler(event) {
   if (event.httpMethod === "GET") {
     return {
       statusCode: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({
-        toggles: state.toggles,
-        thrust: state.thrust
-      })
+      headers: corsHeaders,
+      body: JSON.stringify(lastReceived)
     };
   }
 
   return {
     statusCode: 405,
+    headers: corsHeaders,
     body: "Method Not Allowed"
   };
 }
