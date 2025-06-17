@@ -90,6 +90,17 @@
       if (!active) animateThrust(0);
     }
 
+    function applyThrustUpdate(percent) {
+      const p = Math.max(0, Math.min(100, percent));
+      const segments = document.querySelectorAll('#engines-bar .bar-segment');
+      const total = segments.length;
+      const activeCount = Math.round((p / 100) * total);
+      segments.forEach((seg, i) => {
+        seg.classList.toggle('active', i < activeCount);
+      });
+      currentThrust = p;
+    }
+
     function animateThrust(targetPercent, callback) {
       const segments = document.querySelectorAll('#engines-bar .bar-segment');
       const total = segments.length;
@@ -111,34 +122,20 @@
       }, 100);
     }
 
-    function setThrust(percent, animate = true) {
-      const p = Math.max(0, Math.min(100, percent));
-      if (zones["ENGINES"] && !zones["ENGINES"].classList.contains("active")) return;
-      if (animate) animateThrust(p);
-      else updateSegments(p);
-    }
-
-    function updateSegments(percent) {
-      const segments = document.querySelectorAll('#engines-bar .bar-segment');
-      const total = segments.length;
-      const activeCount = Math.round((percent / 100) * total);
-      segments.forEach((seg, i) => {
-        seg.classList.toggle('active', i < activeCount);
-      });
-      currentThrust = percent;
-    }
-
     async function pollProxyLoop() {
       while (true) {
         try {
           const res = await fetch("/.netlify/functions/from-sl?ts=" + Date.now());
           const data = await res.json();
 
-          if (data.update && data.update.ENGINE !== undefined) {
-            applyEngineUpdate(data.update.ENGINE);
+          if (data.update) {
+            if ("ENGINE" in data.update) {
+              applyEngineUpdate(data.update.ENGINE);
+            }
+            if ("THRUST" in data.update) {
+              applyThrustUpdate(data.update.THRUST);
+            }
           }
-
-          if (typeof data.thrust === "number") setThrust(data.thrust);
         } catch (e) {
           console.warn("AJAX error", e);
         }
@@ -147,7 +144,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      updateSegments(0);
       document.getElementById("engines-bar").style.opacity = "0";
       pollProxyLoop();
     });
