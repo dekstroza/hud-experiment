@@ -83,8 +83,8 @@
     function applyEngineUpdate(value) {
       const el = zones["ENGINES"];
       const bar = document.getElementById("engines-bar");
-      const active = value === true;
-
+      const active = value === true || value === "true";
+      
       if (el) el.classList.toggle("active", active);
       bar.style.opacity = active ? "1" : "0";
       if (!active) animateThrust(0);
