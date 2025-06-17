@@ -80,22 +80,15 @@
       "LANDING GEAR": document.getElementById("zone-gear")
     };
 
-  function forceToggleState(label, isActive) {
-  const el = zones[label];
-  if (!el) return;
+    function applyEngineUpdate(value) {
+      const el = zones["ENGINES"];
+      const bar = document.getElementById("engines-bar");
+      const active = value === true;
 
-  const active = (isActive === true || isActive === "true" || isActive === 1 || isActive === "1");
-
-  el.classList.toggle("active", active);
-
-  if (label === "ENGINES") {
-    const bar = document.getElementById("engines-bar");
-    bar.style.opacity = active ? "1" : "0";
-    if (!active) animateThrust(0);
-  }
-}
-
-
+      if (el) el.classList.toggle("active", active);
+      bar.style.opacity = active ? "1" : "0";
+      if (!active) animateThrust(0);
+    }
 
     function animateThrust(targetPercent, callback) {
       const segments = document.querySelectorAll('#engines-bar .bar-segment');
@@ -141,10 +134,8 @@
           const res = await fetch("/.netlify/functions/from-sl?ts=" + Date.now());
           const data = await res.json();
 
-          if (data.toggles) {
-            for (const [label, isActive] of Object.entries(data.toggles)) {
-              forceToggleState(label, isActive);
-            }
+          if (data.update && data.update.ENGINE !== undefined) {
+            applyEngineUpdate(data.update.ENGINE);
           }
 
           if (typeof data.thrust === "number") setThrust(data.thrust);
