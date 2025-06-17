@@ -73,6 +73,7 @@
   <script>
     let currentThrust = 0;
     let lastToggle = null;
+    let engineActive = false;
 
     const zones = {
       "ENGINES": document.getElementById("zone-engines"),
@@ -85,14 +86,14 @@
       const el = zones[label];
       if (!el) return;
 
-      const newState = !el.classList.contains("active");
-      el.classList.toggle("active", newState);
+      const isNowActive = !el.classList.contains("active");
+      el.classList.toggle("active", isNowActive);
 
       if (label === "ENGINES") {
+        engineActive = isNowActive;
         const bar = document.getElementById("engines-bar");
-        bar.style.opacity = newState ? "1" : "0";
-        if (newState) setTimeout(() => animateThrust(currentThrust), 300);
-        else animateThrust(0);
+        bar.style.opacity = engineActive ? "1" : "0";
+        if (!engineActive) animateThrust(0);
       }
     }
 
@@ -119,6 +120,7 @@
 
     function setThrust(percent, animate = true) {
       const p = Math.max(0, Math.min(100, percent));
+      if (!engineActive) return; // Do not animate thrust if engine is off
       if (animate) animateThrust(p);
       else updateSegments(p);
     }
