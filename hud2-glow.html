@@ -85,13 +85,13 @@
       const el = zones[label];
       if (!el) return;
 
-      const isActive = el.classList.contains("active");
-      el.classList.toggle("active", !isActive);
+      const newState = !el.classList.contains("active");
+      el.classList.toggle("active", newState);
 
       if (label === "ENGINES") {
         const bar = document.getElementById("engines-bar");
-        bar.style.opacity = !isActive ? "1" : "0";
-        if (!isActive) setTimeout(() => animateThrust(currentThrust), 300);
+        bar.style.opacity = newState ? "1" : "0";
+        if (newState) setTimeout(() => animateThrust(currentThrust), 300);
         else animateThrust(0);
       }
     }
