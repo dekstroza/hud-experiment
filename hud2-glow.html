@@ -113,6 +113,15 @@
       else el.classList.remove("active");
     }
 
+    function applyRampUpdate(state) {
+      const el = zones["REAR CARGO RAMP"];
+      if (!el) return;
+
+      const active = (state === "DOWN");
+      if (active) el.classList.add("active");
+      else el.classList.remove("active");
+    }
+
     function animateThrust(targetPercent, callback) {
       const segments = document.querySelectorAll('#engines-bar .bar-segment');
       const total = segments.length;
@@ -149,6 +158,9 @@
             }
             if ("LANDING_GEAR" in data.update) {
               applyLandingGearUpdate(data.update.LANDING_GEAR);
+            }
+            if ("RAMP" in data.update) {
+              applyRampUpdate(data.update.RAMP);
             }
           }
         } catch (e) {
