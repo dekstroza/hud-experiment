@@ -81,16 +81,20 @@
     };
 
     function forceToggleState(label, isActive) {
-      const el = zones[label];
-      if (!el) return;
-      el.classList.toggle("active", isActive);
+  const el = zones[label];
+  if (!el) return;
 
-      if (label === "ENGINES") {
-        const bar = document.getElementById("engines-bar");
-        bar.style.opacity = isActive ? "1" : "0";
-        if (!isActive) animateThrust(0);
-      }
-    }
+  const active = (isActive === true || isActive === "true" || isActive === 1 || isActive === "1");
+
+  el.classList.toggle("active", active);
+
+  if (label === "ENGINES") {
+    const bar = document.getElementById("engines-bar");
+    bar.style.opacity = active ? "1" : "0";
+    if (!active) animateThrust(0);
+  }
+}
+
 
     function animateThrust(targetPercent, callback) {
       const segments = document.querySelectorAll('#engines-bar .bar-segment');
