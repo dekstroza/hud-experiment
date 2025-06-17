@@ -86,14 +86,15 @@
       const el = zones[label];
       if (!el) return;
 
-      const isNowActive = !el.classList.contains("active");
-      el.classList.toggle("active", isNowActive);
-
       if (label === "ENGINES") {
-        engineActive = isNowActive;
+        engineActive = !engineActive;
+        el.classList.toggle("active", engineActive);
         const bar = document.getElementById("engines-bar");
         bar.style.opacity = engineActive ? "1" : "0";
         if (!engineActive) animateThrust(0);
+      } else {
+        const newState = !el.classList.contains("active");
+        el.classList.toggle("active", newState);
       }
     }
 
@@ -120,7 +121,7 @@
 
     function setThrust(percent, animate = true) {
       const p = Math.max(0, Math.min(100, percent));
-      if (!engineActive) return; // Do not animate thrust if engine is off
+      if (!engineActive) return;
       if (animate) animateThrust(p);
       else updateSegments(p);
     }
