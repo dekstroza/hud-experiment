@@ -72,6 +72,8 @@
 
   <script>
     let currentThrust = 0;
+    let lastToggle = null;
+
     const zones = {
       "ENGINES": document.getElementById("zone-engines"),
       "REAR CARGO RAMP": document.getElementById("zone-ramp"),
@@ -133,7 +135,12 @@
         try {
           const res = await fetch("/.netlify/functions/from-sl?ts=" + Date.now());
           const data = await res.json();
-          if (data.toggle) toggleUI(data.toggle);
+
+          if (data.toggle && data.toggle !== lastToggle) {
+            toggleUI(data.toggle);
+            lastToggle = data.toggle;
+          }
+
           if (data.thrust !== undefined) setThrust(data.thrust);
         } catch (e) {
           console.warn("AJAX error", e);
