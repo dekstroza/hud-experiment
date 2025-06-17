@@ -13,12 +13,16 @@ export async function handler(event) {
     try {
       const body = JSON.parse(event.body || "{}");
 
-      // Handle toggle updates
-      if (body.toggle && state.toggles.hasOwnProperty(body.toggle)) {
-        state.toggles[body.toggle] = !state.toggles[body.toggle];
+      // ✅ Handle full toggle updates with explicit states
+      if (body.toggles && typeof body.toggles === "object") {
+        for (const key in body.toggles) {
+          if (state.toggles.hasOwnProperty(key)) {
+            state.toggles[key] = !!body.toggles[key];  // Force to boolean
+          }
+        }
       }
 
-      // Handle explicit thrust percentage
+      // ✅ Handle explicit thrust percentage
       if (typeof body.thrust === "number") {
         state.thrust = Math.max(0, Math.min(100, body.thrust));
       }
@@ -30,7 +34,7 @@ export async function handler(event) {
     } catch (e) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Invalid JSON" })
+        body: JSON.stringify({ error: "Invalid JSON", detail: e.message })
       };
     }
   }
