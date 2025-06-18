@@ -161,6 +161,7 @@
           if (data.update) {
             if ("ENGINE" in data.update) {
               applyEngineUpdate(data.update.ENGINE);
+              applyThrustUpdate(40);
             }
             if ("THRUST" in data.update) {
               applyThrustUpdate(data.update.THRUST);
